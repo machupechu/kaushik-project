@@ -1,1 +1,19 @@
+routes=[]
+n=int(input("no.of routes "))
+for i in range(n):
+    print(f"rought{i+1}")
+    name=input("name to the rought:")
+    petrol=int(input("petro stations avaliablity (1 for yes and 0 for no)"))
+    saf=int(input("safity from 1-10"))
+    street=int(input("street light on rodes present:"))
+    hotel=int(input("frequency of hotels 1-10"))
+    score=petrol+saf+street+hotel
+    routes.append([name,score])
+best = max(routes, key=lambda x: x[1])#find the largest in the first index
 
+print("\n------ results-----")
+for r in routes:
+    print(f"Route {r[0]} >>> Score: {r[1]}")
+
+print(f"\nBest Route: {best[0]} (Score = {best[1]})")
+    
