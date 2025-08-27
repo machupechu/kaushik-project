@@ -1,0 +1,23 @@
+import datetime
+shedule={}
+def slot():
+    date=input("ENTER DAY IN DD-MM-YYYY FORMAT")
+    time=input("ENTER TIME IN HH:MM")
+    slot=datetime.datetime.strptime(date+" "+time,"%d-%m-%Y %H:%M")
+    exam=input("ENTER EXAM /ASSINMENT")
+    shedule[slot]=exam
+    print("done")
+    
+
+def view():
+    for i in sorted(shedule.keys()):
+        print(f"{i}--->{shedule[i]}")
+def rem():
+    today=datetime.datetime.now()
+    for i in sorted(shedule.keys()):
+        d=(i-today).days
+        print(f"REMENDER{shedule[i]} in {d} day(s)")
+        
+slot()
+view()
+rem()
