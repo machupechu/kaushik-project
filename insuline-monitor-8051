@@ -1,0 +1,97 @@
+
+
+        ORG 0000H
+        SJMP MAIN
+
+
+
+
+MAIN:
+        CLR P2.0          ; ensure pump OFF (P2.0 = 0)
+
+MAIN_LOOP:
+        MOV A, P1         ; read glucose level from Port 1
+        MOV R7, A         ; save glucose in R7 for later
+
+        ; --- Check if glucose < 120 ---
+        MOV A, R7
+        CLR C
+        SUBB A, #078H     ; subtract 120 (0x78)
+        JC BELOW_120      ; if glucose < 120, skip delivery
+
+        ; --- Here A >= 120. Check if A <= 160 (i.e. < 161) ---
+        MOV A, R7
+        CLR C
+        SUBB A, #0A1H     ; subtract 161 (0xA1)
+        JC RANGE_120_160  ; if glucose <= 160 -> deliver 2s
+
+        ; Else glucose >= 161 -> deliver 3s
+        LCALL DELIVER_3S
+        LCALL DELAY_5S
+        SJMP MAIN_LOOP
+
+RANGE_120_160:
+        LCALL DELIVER_2S
+        LCALL DELAY_5S
+        SJMP MAIN_LOOP
+
+BELOW_120:
+        CLR P2.0          ; ensure pump OFF
+        LCALL DELAY_5S
+        SJMP MAIN_LOOP
+
+;--------------------------------------
+; DELIVERY ROUTINES
+;  Delivery implemented as N * 50 ms chunks (checks override each chunk)
+;  2 s = 40 * 50 ms, 3 s = 60 * 50 ms
+;--------------------------------------
+DELIVER_2S:
+        MOV R2, #40       ; number of 50ms chunks for 2s
+        LCALL DELIVER_N_50MS
+        RET
+
+DELIVER_3S:
+        MOV R2, #60       ; number of 50ms chunks for 3s
+        LCALL DELIVER_N_50MS
+        RET
+
+; DELIVER_N_50MS: uses R2 as counter
+DELIVER_N_50MS:
+        SETB P2.0         ; turn pump ON
+DELIVER_CHUNK_LOOP:
+        JNB P3.0, STOP_BY_OVERRIDE  ; if P3.0 == 0 (override pressed) -> stop
+        LCALL DELAY_50MS
+        DJNZ R2, DELIVER_CHUNK_LOOP
+        CLR P2.0          ; turn pump OFF after delivery
+        RET
+
+STOP_BY_OVERRIDE:
+        CLR P2.0          ; immediate stop
+        RET
+
+;--------------------------------------
+; DELAYS
+;  - DELAY_50MS: approximate 50 ms software delay (calibrate for clock)
+;  - DELAY_5S: 100 * DELAY_50MS with override check between chunks
+;--------------------------------------
+DELAY_50MS:
+        MOV R4, #200
+D50_LOOP:
+        MOV R3, #250
+D50_INNER:
+        NOP
+        DJNZ R3, D50_INNER
+        DJNZ R4, D50_LOOP
+        RET
+
+DELAY_5S:
+        MOV R5, #100      ; 100 * 50ms = 5000ms
+D5_LOOP:
+        JNB P3.0, D5_EXIT ; if override pressed -> exit early
+        LCALL DELAY_50MS
+        DJNZ R5, D5_LOOP
+        RET
+D5_EXIT:
+        RET
+
+        END
