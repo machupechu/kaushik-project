@@ -7,7 +7,7 @@
 
 
 MAIN:
-        CLR P2.0          ; ensure pump OFF (P2.0 = 0)
+        CLR P2.0          
 
 MAIN_LOOP:
         MOV A, P1         ; read glucose level from Port 1
@@ -40,11 +40,7 @@ BELOW_120:
         LCALL DELAY_5S
         SJMP MAIN_LOOP
 
-;--------------------------------------
-; DELIVERY ROUTINES
-;  Delivery implemented as N * 50 ms chunks (checks override each chunk)
-;  2 s = 40 * 50 ms, 3 s = 60 * 50 ms
-;--------------------------------------
+
 DELIVER_2S:
         MOV R2, #40       ; number of 50ms chunks for 2s
         LCALL DELIVER_N_50MS
@@ -69,11 +65,6 @@ STOP_BY_OVERRIDE:
         CLR P2.0          ; immediate stop
         RET
 
-;--------------------------------------
-; DELAYS
-;  - DELAY_50MS: approximate 50 ms software delay (calibrate for clock)
-;  - DELAY_5S: 100 * DELAY_50MS with override check between chunks
-;--------------------------------------
 DELAY_50MS:
         MOV R4, #200
 D50_LOOP:
